@@ -101,9 +101,21 @@ class openstack::swift::proxy (
     local_net_ip => $swift_local_net_ip,
   }
 
-  # exports rsync gets that can be used to sync the ring files
-  @@swift::ringsync { ['account', 'object', 'container']:
-   ring_server => $swift_local_net_ip
+  # Check if we are the first proxy to be set up.
+  if exists(Swift::Ringsinc['account']) and
+     exists(Swift::Ringsinc['object']) and
+     exists(Swift::Ringsinc['container']) {
+
+    # Rings are already set up, use them instead of creating them
+    # collect resources for synchronizing the ring databases
+    Swift::Ringsync<<||>>
+  
+  } else {
+
+    # exports rsync gets that can be used to sync the ring files
+    @@swift::ringsync { ['account', 'object', 'container']:
+     ring_server => $swift_local_net_ip
+    }
   }
 
   # deploy a script that can be used for testing
